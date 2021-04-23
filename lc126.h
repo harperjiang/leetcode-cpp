@@ -17,17 +17,21 @@ using namespace std;
 namespace lc126 {
     class Solution {
     private:
-        vector<string> &word_list_;
         unordered_map<string, uint32_t> rev_index_;
         uint8_t *transition_;
 
-        void buildTransition() {
-            int length = word_list_.size();
-            transition_ = malloc(length * length);
+        vector<vector<int>> back_trace_;
+
+        void buildTransition(vector<string> &wordList) {
+            rev_index_.clear();
+
+            int length = wordList.size();
+            transition_ = (uint8_t *) malloc(length * length);
             memset(transition_, 0, length * length);
-            for (int i = 0; i < word_list_.size(); ++i) {
-                for (int j = i + 1; j < word_list_.size(); ++j) {
-                    if (check(word_list_[i], word_list_[j])) {
+            for (int i = 0; i < wordList.size(); ++i) {
+                rev_index_[wordList[i]] = i;
+                for (int j = i + 1; j < wordList.size(); ++j) {
+                    if (check(wordList[i], wordList[j])) {
                         transition_[i * length + j] = 1;
                         transition_[j * length + i] = 1;
                     }
@@ -55,105 +59,159 @@ namespace lc126 {
             return false;
         }
 
+        uint32_t shortest_path(int from, int to) {
+            auto length = rev_index_.size();
 
-        vector<vector<int>> shortest_path(int from, int to) {
-            auto length = word_list_.size();
-
-            int shortest[length];
-            memset(shortest, INT32_MAX, length);
+            uint32_t shortest[length];
+            memset(shortest, 0xff, length * sizeof(uint32_t));
             shortest[from] = 0;
-            vector<vector<int>> path_link;
-            last.resize(length);
 
-            forward_list<int> frontier;
+            back_trace_.clear();
+            back_trace_.resize(length);
+
+            vector<int> frontier;
             frontier.push_back(from);
+            int frontier_pointer = 0;
 
-            while (!frontier.empty()) {
-                int current = frontier[0];
-                frontier.pop_front();
+            while (frontier_pointer < frontier.size()) {
+                int current = frontier[frontier_pointer];
+                frontier_pointer++;
                 for (auto i = 0; i < length; ++i) {
                     if (transition_[current * length + i]) {
                         if (shortest[i] > shortest[current] + 1) {
                             shortest[i] = shortest[current] + 1;
-                            path_link[i].clear();
-                            path_link[i].push_back(current);
+                            back_trace_[i].clear();
+                            back_trace_[i].push_back(current);
                             frontier.push_back(i);
                         } else if (shortest[i] == shortest[current] + 1) {
-                            path_link[i].push_back(current);
+                            back_trace_[i].push_back(current);
                         }
                     }
                 }
             }
 
-            auto shortest_len = shorest[to];
+            return shortest[to];
+        }
+
+        vector<vector<int>> trace_to_path(int end_index, int length) {
             vector<vector<int>> result;
-            result.push_back(vector<int>{to});
-            for (int i = 1; i < shortest_len; ++i) {
-                vector<vector<int>> new_result;
-                for(auto v: result) {
-                    auto last = v[v.size()-1];
-                    auto append = path_link[last];
-                    for(auto a: append) {
-                        vector<int> newv(v);
-                        newv.push_back(a);
-                        new_result.push_back(newv);
+            for (auto i: back_trace_[end_index]) {
+                result.push_back(vector<int>{i});
+            }
+            for (int i = 0; i < length - 1; ++i) {
+                int round = result.size();
+                for (int j = 0; j < round; ++j) {
+                    auto base = result[j];
+                    auto &append = back_trace_[base[base.size() - 1]];
+
+                    for (int k = 1; k < append.size(); ++k) {
+                        auto newpath = vector<int>(base);
+                        newpath.push_back(append[k]);
+                        result.push_back(newpath);
                     }
+                    result[j].push_back(append[0]);
                 }
-                result = new_result;
+
             }
             return result;
         }
 
     public:
-
         vector<vector<string>> findLadders(string beginWord, string endWord, vector<string> &wordList) {
-            word_list_ = wordList;
-            buildTransition();
+            buildTransition(wordList);
 
-            vector<vector<string>> result;
-
-            auto found = rev_index_.find(endWord);
+            auto end_found = rev_index_.find(endWord);
             auto end_index = -1;
-            if (found == rev_index_.end()) {
+            if (end_found == rev_index_.end()) {
                 // No end word
-                return result;
+                return vector<vector<string>>();
             } else {
-                end_index = found->second;
+                end_index = end_found->second;
             }
 
             int shortest_threshold = wordList.size();
-            for (int i = 0; i < wordList.size(); ++i) {
-                auto word = wordList[i];
-                if (check(beginWord, word)) {
-                    auto shortest = shortest_path(i, end_index);
-                    if (!shortest.empty()) {
-                        if (shortest[0].size() < shortest_threshold) {
-                            shortest_threshold = shortest[0].size();
-                            result.clear();
-                        }
-                        if (shortest[0].size() <= shortest_threshold) {
-                            auto short_length = shortest[0].size();
-                            for (auto v : shortest) {
-                                vector<string> path;
-                                path.push_back(beginWord);
-                                // v is a reverse path
-                                for (int ri = short_length - 1; ri >= 0; ri--) {
-                                    path.push_back(wordList[v[ri]]);
+            // Recorded shortest paths
+            vector<vector<int>> paths;
+
+
+            auto begin_found = rev_index_.find(beginWord);
+            bool contain_header = begin_found != rev_index_.end();
+            if (!contain_header) {
+                for (int i = 0; i < wordList.size(); ++i) {
+                    auto word = wordList[i];
+                    if (check(beginWord, word)) {
+                        int shortest = shortest_path(i, end_index);
+                        if (shortest < INT32_MAX) {
+                            if (shortest < shortest_threshold) {
+                                // clear longer paths
+                                paths.clear();
+                            }
+                            if (shortest <= shortest_threshold) {
+                                auto new_path = trace_to_path(end_index, shortest);
+                                for (auto &p:new_path) {
+                                    paths.push_back(p);
                                 }
-                                result.push_back(path);
+                                shortest_threshold = shortest;
                             }
                         }
                     }
                 }
+            } else {
+                int shortest = shortest_path(begin_found->second, end_index);
+                if (shortest < INT32_MAX) {
+                    auto new_path = trace_to_path(end_index, shortest);
+                    for (auto &p:new_path) {
+                        paths.push_back(p);
+                    }
+                }
+                shortest_threshold = shortest;
             }
             clear();
+
+            vector<vector<string>> result;
+            for (auto p: paths) {
+                vector<string> strp;
+                if (!contain_header)
+                    strp.push_back(beginWord);
+                for (int i = 0; i < shortest_threshold; ++i) {
+                    strp.push_back(wordList[p[shortest_threshold - 1 - i]]);
+                }
+                strp.push_back(endWord);
+                result.push_back(strp);
+            }
             return result;
         }
 
     };
 
     void run() {
+        Solution solution;
+        {
+            auto beginWord = "hit";
+            auto endWord = "cog";
+            vector<string> wordList{"hot", "dot", "dog", "lot", "log", "cog"};
+            auto result = solution.findLadders(beginWord, endWord, wordList);
+        }
+        {
+            auto beginWord = "a";
+            auto endWord = "c";
+            vector<string> wordList{"a", "b", "c"};
+            auto result = solution.findLadders(beginWord, endWord, wordList);
+        }
+        {
+            auto beginWord = "red";
+            auto endWord = "tax";
+            vector<string> wordList{"ted", "tex", "red", "tax", "tad", "den", "rex", "pee"};
 
+            auto result = solution.findLadders(beginWord, endWord, wordList);
+        }
+        {
+            auto beginWord = "qa";
+            auto endWord = "sq";
+            vector<string> wordList{"si","go","se","cm","so","ph","mt","db","mb","sb","kr","ln","tm","le","av","sm","ar","ci","ca","br","ti","ba","to","ra","fa","yo","ow","sn","ya","cr","po","fe","ho","ma","re","or","rn","au","ur","rh","sr","tc","lt","lo","as","fr","nb","yb","if","pb","ge","th","pm","rb","sh","co","ga","li","ha","hz","no","bi","di","hi","qa","pi","os","uh","wm","an","me","mo","na","la","st","er","sc","ne","mn","mi","am","ex","pt","io","be","fm","ta","tb","ni","mr","pa","he","lr","sq","ye"};
+
+            auto result = solution.findLadders(beginWord, endWord, wordList);
+        }
     }
 
 }
