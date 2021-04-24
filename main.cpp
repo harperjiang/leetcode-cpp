@@ -26,7 +26,5 @@ int main() {
     std::cout << ms_double.count() << "ms";
     return 0;
 
-
-
 }
 
