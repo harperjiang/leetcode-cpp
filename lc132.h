@@ -9,6 +9,7 @@
 #include <cstring>
 #include <assert.h>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
@@ -20,10 +21,7 @@ namespace lc132 {
         int minCut(string s) {
             int length = s.size();
 
-            int reach[length];
-            for (int i = 0; i < length; ++i) {
-                reach[i] = i + 1;
-            }
+            unordered_map<int, vector<int>> edges;
 
             for (int i = 0; i < length - 1; ++i) {
                 if (s[i] == s[i + 1]) {
@@ -31,46 +29,88 @@ namespace lc132 {
                     int j = 0;
                     while (i - j >= 0 && i + 1 + j < length) {
                         if (s[i - j] == s[i + 1 + j]) {
-                            if (reach[i - j] < i + 1 + j + 1) {
-                                reach[i - j] = i + 1 + j + 1;
+                            if (edges.find(i - j) == edges.end()) {
+                                edges[i - j] = vector<int>();
                             }
+                            edges[i - j].push_back(i + 1 + j + 1);
                             j++;
                         } else {
                             break;
                         }
                     }
-                    j--;
-                    if (reach[i - j] < i + 1 + j + 1) {
-                        reach[i - j] = i + 1 + j + 1;
-                    }
                 }
-                int j = 0;
+                int j = 1;
                 while (i - j >= 0 && i + j < length) {
                     if (s[i - j] == s[i + j]) {
-                        if (reach[i - j] < i + j + 1) {
-                            reach[i - j] = i + j + 1;
+                        if (edges.find(i - j) == edges.end()) {
+                            edges[i - j] = vector<int>();
                         }
+                        edges[i - j].push_back(i + j + 1);
                         j++;
                     } else {
                         break;
                     }
                 }
-                j--;
-                if (j > 0) {
-                    if (reach[i - j] < i + j + 1) {
-                        reach[i - j] = i + j + 1;
+            }
+
+            // Look for shortest paths from 0 to length
+            uint32_t shortest[length + 1];
+
+            for (int i = 0; i <= length; ++i) {
+                shortest[i] = INT32_MAX;
+            }
+            shortest[0] = 0;
+            vector<int> scan;
+            scan.push_back(0);
+
+            uint8_t visited[length + 1];
+            memset(visited, 0, length + 1);
+            uint8_t scheduled[length + 1];
+            memset(scheduled, 0, length + 1);
+
+            int pointer = 0;
+            while (pointer < scan.size()) {
+                int current = scan[pointer++];
+                visited[current] = 1;
+                if (current == length) {
+                    break;
+                }
+                auto found = edges.find(current);
+                if (found == edges.end()) {
+                    if (!visited[current + 1]) {
+                        if (shortest[current + 1] > shortest[current] + 1) {
+                            shortest[current + 1] = shortest[current] + 1;
+                        }
+                        if (!scheduled[current + 1]) {
+                            scan.push_back(current + 1);
+                            scheduled[current + 1] = 1;
+                        }
+                    }
+                } else {
+                    if (!visited[current + 1]) {
+                        if (shortest[current + 1] > shortest[current] + 1) {
+                            shortest[current + 1] = shortest[current] + 1;
+                        }
+                        if (!scheduled[current + 1]) {
+                            scan.push_back(current + 1);
+                            scheduled[current + 1] = 1;
+                        }
+                    }
+                    for (auto &next: found->second) {
+                        if(!visited[next]) {
+                            if (shortest[next] > shortest[current] + 1) {
+                                shortest[next] = shortest[current] + 1;
+                            }
+                            if(!scheduled[next]) {
+                                scan.push_back(next);
+                                scheduled[next] = 1;
+                            }
+                        }
                     }
                 }
             }
 
-            int counter = 0;
-            int sum = 0;
-            while (counter < length) {
-                counter = reach[counter];
-                sum++;
-            }
-
-            return sum - 1;
+            return shortest[length] - 1;
         }
     };
 
@@ -130,32 +170,32 @@ namespace lc132 {
 //        {
 //            assert(3 == solution.minCut("ccaacabacb"));
 //        }
-        {
-            assert(1 == solution.minCut("aaabaa"));
-        }
 //        {
-//            std::cout << solution.minCut(
-//                    "fiefhgdcdcgfeibggchibffahiededbbegegdfibdbfdadfbdbceaadeceeefiheibahgececggaehbdcgebaigfacifhdbe"
-//                    "cbebfhiefchaaheiichgdbheacfbhfiaffaecicbegdgeiaiccghggdfggbebdaefcagihbdhhigdgbghbahhhdagbdaefec"
-//                    "cfiaifffcfehfcdiiieibadcedibbedgfegibefagfccahfcbegdfdhhdgfhgbchiaieehdgdabhidhfeecgfiibediiafac"
-//                    "agigbhchcdhbaigdcedggehhgdhedaebchcafcdehcffdiagcafcgiidhdhedgaaegdchibhdaegdfdaiiidcihifbfidech"
-//                    "icighbcbgibadbabieaafgeagfhebfaheaeeibagdfhadifafghbfihehgcgggffgbfccgafigieadfehieafaehaggeeaaa"
-//                    "ehggffccddchibegfhdfafhadgeieggiigacbfgcagigbhbhefcadafhafdiegahbhccidbeeagcgebehheebfaechceefdi"
-//                    "afgeddhdfcadfdafbhiifigcbddahbabbeedidhaieagheihhgffbfbiacgdaifbedaegbhigghfeiahcdieghhdabdggfcg"
-//                    "bafgibiifdeefcbegcfcdihaeacihgdchihdadifeifdgecbchgdgdcifedacfddhhbcagaicbebbiadgbddcbagbafeadhd"
-//                    "daeebdgdebafabghcabdhdgieiahggddigefddccfccibifgbfcdccghgceigdfdbghdihechfabhbacifgbiiiihcgifhdb"
-//                    "hfcaiefhccibebcahidachfabicbdabibiachahggffiibbgchbidfbbhfcicfafgcagaaadbacddfiigdiiffhbbehaaaci"
-//                    "dggfbhgeaghigihggfcdcidbfccahhgaffiibbhidhdacacdfebedbiacaidaachegffaiiegeabfdgdcgdacfcfhdcbfiaa"
-//                    "ifgfaciacfghagceaaebhhibbieehhcbiggabefbeigcbhbcidbfhfcgdddgdffghidbbbfbdhcgabaagddcebaechbbiege"
-//                    "iggbabdhgghciheabdibefdfghbfbfebidhicdhbeghebeddgfdfhefebiiebdchifbcbahaddhbfafbbcebiigadhgcfbeb"
-//                    "gbebhfddgdeehhgdegaeedfadegfeihcgeefbbagbbacbgggciehdhiggcgaaicceeaefgcehfhfdciaghcbbgdihbhecfbg"
-//                    "ffefhgiefgeiggcebgaacefidghdfdhiabgibchdicdehahbibeddegfciaeaffgbefbbeihbafbagagedgbdadfdggfeaeb"
-//                    "aidchgdbcifhahgfdcehbahhdggcdggceiabhhafghegfdiegbcadgaecdcdddfhicabdfhbdiiceiegiedecdifhbhhfhgd"
-//                    "bhibbdgafhgdcheefdhifgddchadbdggiidhbhegbdfdidhhfbehibiaacdfbiagcbheabaaebfeaeafbgigiefeaeheabif"
-//                    "gcfibiddadicheahgbfhbhddaheghddceedigddhchecaghdegigbegcbfgbggdgbbigegffhcfcbbebdchffhddbfhhfgeg"
-//                    "ggibhafiebcfgeaeehgdgbccbfghagfdbdfcbcigbigaccecfehcffahiafgabfcaefbghccieehhhiighcfeabffggfchfd"
-//                    "gcfhadgidabdceediefdccceidcfbfiiaidechhbhdccccaigeegcaicabbifigcghcefaafaefd") << '\n';
+//            assert(1 == solution.minCut("aaabaa"));
 //        }
+        {
+            std::cout << solution.minCut(
+                    "fiefhgdcdcgfeibggchibffahiededbbegegdfibdbfdadfbdbceaadeceeefiheibahgececggaehbdcgebaigfacifhdbe"
+                    "cbebfhiefchaaheiichgdbheacfbhfiaffaecicbegdgeiaiccghggdfggbebdaefcagihbdhhigdgbghbahhhdagbdaefec"
+                    "cfiaifffcfehfcdiiieibadcedibbedgfegibefagfccahfcbegdfdhhdgfhgbchiaieehdgdabhidhfeecgfiibediiafac"
+                    "agigbhchcdhbaigdcedggehhgdhedaebchcafcdehcffdiagcafcgiidhdhedgaaegdchibhdaegdfdaiiidcihifbfidech"
+                    "icighbcbgibadbabieaafgeagfhebfaheaeeibagdfhadifafghbfihehgcgggffgbfccgafigieadfehieafaehaggeeaaa"
+                    "ehggffccddchibegfhdfafhadgeieggiigacbfgcagigbhbhefcadafhafdiegahbhccidbeeagcgebehheebfaechceefdi"
+                    "afgeddhdfcadfdafbhiifigcbddahbabbeedidhaieagheihhgffbfbiacgdaifbedaegbhigghfeiahcdieghhdabdggfcg"
+                    "bafgibiifdeefcbegcfcdihaeacihgdchihdadifeifdgecbchgdgdcifedacfddhhbcagaicbebbiadgbddcbagbafeadhd"
+                    "daeebdgdebafabghcabdhdgieiahggddigefddccfccibifgbfcdccghgceigdfdbghdihechfabhbacifgbiiiihcgifhdb"
+                    "hfcaiefhccibebcahidachfabicbdabibiachahggffiibbgchbidfbbhfcicfafgcagaaadbacddfiigdiiffhbbehaaaci"
+                    "dggfbhgeaghigihggfcdcidbfccahhgaffiibbhidhdacacdfebedbiacaidaachegffaiiegeabfdgdcgdacfcfhdcbfiaa"
+                    "ifgfaciacfghagceaaebhhibbieehhcbiggabefbeigcbhbcidbfhfcgdddgdffghidbbbfbdhcgabaagddcebaechbbiege"
+                    "iggbabdhgghciheabdibefdfghbfbfebidhicdhbeghebeddgfdfhefebiiebdchifbcbahaddhbfafbbcebiigadhgcfbeb"
+                    "gbebhfddgdeehhgdegaeedfadegfeihcgeefbbagbbacbgggciehdhiggcgaaicceeaefgcehfhfdciaghcbbgdihbhecfbg"
+                    "ffefhgiefgeiggcebgaacefidghdfdhiabgibchdicdehahbibeddegfciaeaffgbefbbeihbafbagagedgbdadfdggfeaeb"
+                    "aidchgdbcifhahgfdcehbahhdggcdggceiabhhafghegfdiegbcadgaecdcdddfhicabdfhbdiiceiegiedecdifhbhhfhgd"
+                    "bhibbdgafhgdcheefdhifgddchadbdggiidhbhegbdfdidhhfbehibiaacdfbiagcbheabaaebfeaeafbgigiefeaeheabif"
+                    "gcfibiddadicheahgbfhbhddaheghddceedigddhchecaghdegigbegcbfgbggdgbbigegffhcfcbbebdchffhddbfhhfgeg"
+                    "ggibhafiebcfgeaeehgdgbccbfghagfdbdfcbcigbigaccecfehcffahiafgabfcaefbghccieehhhiighcfeabffggfchfd"
+                    "gcfhadgidabdceediefdccceidcfbfiiaidechhbhdccccaigeegcaicabbifigcghcefaafaefd") << '\n';
+        }
     }
 }
 
