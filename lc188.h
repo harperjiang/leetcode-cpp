@@ -63,21 +63,45 @@ namespace lc188 {
             // Dynamic Programming the tree
             int valley_len = valleys.size();
 
-            // dp[i] Records the max profits at current price when choosing i+1 trans
-            int dp[2*k];
-            for (int i = 0; i < k; ++i) {
-                if(i%2==0) {
-                    dp[i] = prices[valleys[0]];
-                } else {
-                    dp[i] = prices[peaks[0]];
+            if (k == 1) {
+                int max_profit = 0;
+                int min_price = prices[valleys[0]];
+                for (int i = 0; i < valley_len; ++i) {
+                    min_price = std::min(min_price, prices[valleys[i]]);
+                    max_profit = std::max(max_profit, prices[peaks[i]] - min_price);
                 }
+                return max_profit;
             }
 
-            for (int i = 1; i < valley_len; ++i) {
-                // for 1 trans
-                dp[0] = std::max(dp[0], prices[peaks[i]] - prices[valleys[i]]);
+            // dp[i] Records the max profits at current price when choosing i+1 trans
+            int dp1[k];
+            int dp2[k];
+            int *current = dp1;
+            int *next = dp2;
+            for (int i = 0; i < k; ++i) {
+                current[i] = prices[peaks[0]] - prices[valleys[0]];
             }
-            return dp[2 * k - 1];
+            int min_price = prices[valleys[0]];
+
+            for (int i = 1; i < valley_len; ++i) {
+                int profit = prices[peaks[i]] - prices[valleys[i]];
+                min_price = std::min(min_price, prices[valleys[i]]);
+
+                next[0] = std::max(current[0], prices[peaks[i]] - min_price);
+                for (int j = 1; j <= k - 2; j++) {
+                    if (j > i) {
+                        next[j] = next[j - 1];
+                    } else {
+                        next[j] = std::max(current[j], current[j - 1] + profit);
+                    }
+                }
+                next[k - 1] = (i >= k - 1) ? std::max(current[k - 2] + profit, current[k - 1]) : next[k - 2];
+
+                int *temp = current;
+                current = next;
+                next = temp;
+            }
+            return current[k - 1];
         }
     };
 
@@ -102,12 +126,12 @@ namespace lc188 {
                 return maxProfit;
             }
 
-            vector<int> dp((2 * k) + 1);
+            vector<int> dp((2 * k) );
             dp[0] = -prices[0];
 
-            for (int i = 1; i <= 2 * k; i++) {
+            for (int i = 1; i < 2 * k; i++) {
                 if (i % 2 == 0) {
-                    dp[i] = INT_MIN;
+                    dp[i] = INT32_MIN;
                 } else {
                     dp[i] = 0;
                 }
@@ -115,10 +139,9 @@ namespace lc188 {
 
             //Case 3 :
             for (int i = 0; i < n; i++) {
-                for (int j = 0; j <= 2 * k; j++) {
-
+                for (int j = 0; j < 2 * k; j++) {
                     if (j == 0) {
-                        dp[j] = max(dp[j], -prices[i]);
+                        dp[j] = max(dp[j], -prices[i]);// smallest value
                     } else if (j % 2 == 0) {
                         dp[j] = max(dp[j], dp[j - 1] - prices[i]);
                     } else {
@@ -131,8 +154,15 @@ namespace lc188 {
     };
 
     void run() {
-        Solution solution;
-
+        Solution2 solution;
+        {
+            vector<int> prices{4,8,6,8,7,9,2,10};
+            assert(7 == solution.maxProfit(3, prices));
+        }
+//        {
+//            vector<int> prices{6, 1, 6, 4, 3, 0, 2};
+//            assert(5 == solution.maxProfit(1, prices));
+//        }
 //        {
 //            vector<int> prices{2, 4, 1};
 //            assert(2 == solution.maxProfit(2, prices));
@@ -141,10 +171,10 @@ namespace lc188 {
 //            vector<int> prices{3, 2, 6, 5, 0, 3};
 //            assert(7 == solution.maxProfit(2, prices));
 //        }
-        {
-            vector<int> prices{1, 8, 2, 6, 3, 5};
-            assert(11 == solution.maxProfit(2, prices));
-        }
+//        {
+//            vector<int> prices{1, 8, 2, 6, 3, 5};
+//            assert(11 == solution.maxProfit(2, prices));
+//        }
 //        {
 //            vector<int> prices{2, 2, 5};
 //            assert(3 == solution.maxProfit(2, prices));
@@ -156,6 +186,10 @@ namespace lc188 {
 //        {
 //            vector<int> prices{3,3,5,0,0,3,1,4};
 //            assert(6 == solution.maxProfit(2,prices));
+//        }
+//        {
+//            vector<int> prices{1, 2, 4, 2, 5, 7, 2, 4, 9, 0};
+//            assert(15 == solution.maxProfit(4, prices));
 //        }
 //        {
 //            vector<int> prices{70, 4, 83, 56, 94, 72, 78, 43, 2, 86, 65, 100, 94, 56, 41, 66, 3, 33, 10, 3, 45, 94, 15,
