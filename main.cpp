@@ -1,7 +1,7 @@
 #include <iostream>
 #include <chrono>
 
-#include "lc218.h"
+#include "lc224.h"
 
 
 int main() {
@@ -12,7 +12,7 @@ int main() {
 
     auto t1 = high_resolution_clock::now();
 
-    lc218::run();
+    lc224::run();
 
     auto t2 = high_resolution_clock::now();
 
