@@ -42,8 +42,8 @@ namespace lc214 {
                 // Record one "aa"
                 records.push_back(2);
                 pointer = 2;
-                while (pointer <= length - 1){
-                    if(s[pointer] == s[0]) {
+                while (pointer <= length - 1) {
+                    if (s[pointer] == s[0]) {
                         pointer++;
                     } else {
                         break;
@@ -66,40 +66,66 @@ namespace lc214 {
                 }
             }
 
-            pointer = std::max(pointer,2);
-            int back_pointer = 0;
-            while (pointer < length - 1) {
-                if (s[pointer] == s[pointer - 1] || s[pointer] == s[pointer - 2]) {
-                    if (s[pointer] == s[pointer - 1]) {
-                        back_pointer = pointer - 1;
-                    } else {
-                        back_pointer = pointer - 2;
-                    }
-                    while (back_pointer >= 0 && pointer <= length - 1 && s[pointer] == s[back_pointer]) {
-                        pointer++;
-                        back_pointer--;
-                    }
-                    pointer--;
-                    back_pointer++;
-                    if (back_pointer == 0) {// Got one palindrome
-                        records.push_back(pointer - back_pointer + 1);
-                        pointer++;
-                        // Extend all sub-repeating
-                        int len_long = records[records.size() - 1];
-                        int len_short = records[records.size() - 2];
-                        int region = len_long - len_short;
-                        while (s[pointer] == s[len_short + (pointer - len_long) % region]) {
-                            pointer++;
-                        }
-                        pointer = len_long + (pointer - len_long) / region * region;
-                        records.push_back(pointer);
-                    } else {
-                        // Fail to create a palindrome, continue searching
-                        pointer++;
-                    }
+            pointer = std::max(pointer, 2);
+            int back2_pointer = 0; // for aa
+            int back3_pointer = 0; // for aba
+            int half_way = length / 2 + 1;
+            while (pointer <= half_way) {
+                int track_pointer = pointer;
+                if (s[pointer] == s[pointer - 1]) {
+                    back2_pointer = pointer - 1;
                 } else {
+                    back2_pointer = INT32_MIN;
+                }
+                if (s[pointer] == s[pointer - 2]) {
+                    back3_pointer = pointer - 2;
+                } else {
+                    back3_pointer = INT32_MIN;
+                }
+                if(back2_pointer < 0 && back3_pointer < 0) {
+                    pointer++;
+                    continue;
+                }
+
+                while ((back2_pointer >= 0 || back3_pointer >= 0) && track_pointer <= length - 1) {
+                    int inc = 0;
+                    if (back2_pointer >= 0 && s[track_pointer] == s[back2_pointer]) {
+                        back2_pointer--;
+                        inc = 1;
+                    } else {
+                        back2_pointer = INT32_MIN;
+                    }
+
+                    if (back3_pointer >= 0 && s[track_pointer] == s[back3_pointer]) {
+                        back3_pointer--;
+                        inc = 1;
+                    } else {
+                        back3_pointer = INT32_MIN;
+                    }
+                    if (inc == 0) {
+                        break;
+                    } else {
+                        track_pointer++;
+                    }
+                }
+                track_pointer--;
+
+                if (back2_pointer == -1 || back3_pointer == -1) { // palindrome found
+                    pointer = track_pointer+1;
+                    // Extend all sub-repeating
+                    int len_long = pointer;
+                    int len_short = records[records.size() - 1];
+                    int region = len_long - len_short;
+                    while (s[pointer] == s[len_short + (pointer - len_long) % region]) {
+                        pointer++;
+                    }
+                    pointer = len_long + (pointer - len_long) / region * region;
+                    records.push_back(pointer);
+                } else {
+                    // Fail to create a palindrome, continue searching
                     pointer++;
                 }
+
             }
 
             int longest_pa = records[records.size() - 1];
@@ -124,20 +150,22 @@ namespace lc214 {
     void run() {
         Solution solution;
 
-//        assert("" == solution.shortestPalindrome(""));
-//        assert("a" == solution.shortestPalindrome("a"));
-//        assert("aba" == solution.shortestPalindrome("ba"));
-//        assert("aabaa" == solution.shortestPalindrome("abaa"));
-//        assert("abbaabba" == solution.shortestPalindrome("aabba"));
-//        assert("ababa" == solution.shortestPalindrome("ababa"));
-//        assert("aaacecaaa" == solution.shortestPalindrome("aacecaaa"));
-//        assert("dcabbacd"== solution.shortestPalindrome("abbacd"));
-//        assert("dcbabcd" == solution.shortestPalindrome("abcd"));
-//        assert("aaaaa" == solution.shortestPalindrome("aaaaa"));
-        assert("ababbabbbabbaba"==solution.shortestPalindrome("babbbabbaba"));
-//        assert("efbabababababfe" == solution.shortestPalindrome("abababababfe"));
-//        assert("dddabaccabaccabaddd" == solution.shortestPalindrome("abaccabaccabaddd"));
+        assert("" == solution.shortestPalindrome(""));
+        assert("a" == solution.shortestPalindrome("a"));
+        assert("aba" == solution.shortestPalindrome("ba"));
+        assert("aabaa" == solution.shortestPalindrome("abaa"));
+        assert("abbaabba" == solution.shortestPalindrome("aabba"));
+        assert("ababa" == solution.shortestPalindrome("ababa"));
+        assert("aaacecaaa" == solution.shortestPalindrome("aacecaaa"));
+        assert("dcabbacd"== solution.shortestPalindrome("abbacd"));
+        assert("dcbabcd" == solution.shortestPalindrome("abcd"));
+        assert("aaaaa" == solution.shortestPalindrome("aaaaa"));
+        assert("ababbabbbabbaba" == solution.shortestPalindrome("babbbabbaba"));
+        assert("efbabababababfe" == solution.shortestPalindrome("abababababfe"));
+        assert("dddabaccabaccabaddd" == solution.shortestPalindrome("abaccabaccabaddd"));
+        assert("aababaabababababaababaa" == solution.shortestPalindrome("aabababababaababaa"));
     }
+
 
 }
 
