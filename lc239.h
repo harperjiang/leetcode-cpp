@@ -67,11 +67,12 @@ namespace lc239 {
 
             int num_length = nums.size();
             for (; i < num_length; ++i) {
-                heap[seq_to_heap[0]] = nums[i];
+                int to_adjust = seq_to_heap[0];
+                heap[to_adjust] = nums[i];
                 int poped = seq_to_heap.front();
                 seq_to_heap.pop_front();
                 seq_to_heap.push_back(poped);
-                heap_adjust(heap, seq_to_heap, seq_to_heap[0]);
+                heap_adjust(heap, seq_to_heap, to_adjust);
                 result.push_back(heap[0]);
             }
             return result;
