@@ -14,24 +14,26 @@ using namespace std;
 namespace lc239 {
     class Solution {
     private:
-        void swap(vector<int> heap, deque<int> seq_to_heap, int a, int b) {
-
+        void swap(vector<int>& heap, deque<int>& seq_to_heap, int a, int b) {
+            int temp = heap[a];
+            heap[a] = heap[b];
+            heap[b] = temp;
+            seq_to_heap[a] = b;
+            seq_to_heap[b] = a;
         }
 
-        void heapify(vector<int> heap, deque<int> seq_to_heap) {
+        void heapify(vector<int>& heap, deque<int>& seq_to_heap) {
             int length = heap.size();
             for (int j = length - 1; j > 0; j--) {
                 heap_adjust(heap, seq_to_heap, j);
             }
         }
 
-        void heap_adjust(vector<int> heap, deque<int> seq_to_heap, int index) {
+        void heap_adjust(vector<int>& heap, deque<int>& seq_to_heap, int index) {
             int p = index;
-            while (p > 0) {
-                if (heap[p / 2] < heap[p]) {
-                    swap(heap, seq_to_heap, p, p / 2);
-                    p /= 2;
-                }
+            while (p > 0 && heap[p / 2] < heap[p]) {
+                swap(heap, seq_to_heap, p, p / 2);
+                p /= 2;
             }
         }
 
@@ -57,6 +59,7 @@ namespace lc239 {
             int i;
             for (i = 0; i < k; ++i) {
                 heap[i] = nums[i];
+                seq_to_heap.push_back(i);
             }
             heapify(heap, seq_to_heap);
 
@@ -65,6 +68,9 @@ namespace lc239 {
             int num_length = nums.size();
             for (; i < num_length; ++i) {
                 heap[seq_to_heap[0]] = i;
+                int poped = seq_to_heap.front();
+                seq_to_heap.pop_front();
+                seq_to_heap.push_back(poped);
                 heap_adjust(heap, seq_to_heap, seq_to_heap[0]);
                 result.push_back(heap[0]);
             }
