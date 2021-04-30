@@ -14,26 +14,27 @@ using namespace std;
 namespace lc239 {
     class Solution {
     private:
-        void swap(vector<int>& heap, deque<int>& seq_to_heap, int a, int b) {
+        void swap(vector<int> &heap, deque<int> &seq_to_heap, int a, int b) {
             int temp = heap[a];
             heap[a] = heap[b];
             heap[b] = temp;
-            seq_to_heap[a] = b;
-            seq_to_heap[b] = a;
+            temp = seq_to_heap[a];
+            seq_to_heap[a] = seq_to_heap[b];
+            seq_to_heap[b] = temp;
         }
 
-        void heapify(vector<int>& heap, deque<int>& seq_to_heap) {
+        void heapify(vector<int> &heap, deque<int> &seq_to_heap) {
             int length = heap.size();
             for (int j = length - 1; j > 0; j--) {
                 heap_adjust(heap, seq_to_heap, j);
             }
         }
 
-        void heap_adjust(vector<int>& heap, deque<int>& seq_to_heap, int index) {
+        void heap_adjust(vector<int> &heap, deque<int> &seq_to_heap, int index) {
             int p = index;
-            while (p > 0 && heap[p / 2] < heap[p]) {
-                swap(heap, seq_to_heap, p, p / 2);
-                p /= 2;
+            while (p > 0 && heap[(p - 1) / 2] < heap[p]) {
+                swap(heap, seq_to_heap, p, (p - 1) / 2);
+                p = (p - 1) / 2;
             }
         }
 
@@ -82,31 +83,36 @@ namespace lc239 {
     void run() {
         Solution solution;
 
+//        {
+//            vector<int> nums{1, 3, -1, -3, 5, 3, 6, 7};
+//            vector<int> expected{3, 3, 5, 5, 6, 7};
+//            assert(expected == solution.maxSlidingWindow(nums, 3));
+//        }
+//        {
+//            vector<int> nums{1};
+//            vector<int> expected{1};
+//            assert(expected == solution.maxSlidingWindow(nums, 1));
+//        }
+//        {
+//            vector<int> nums{1, -1};
+//            vector<int> expected{1, -1};
+//            assert(expected == solution.maxSlidingWindow(nums, 1));
+//        }
+//
+//        {
+//            vector<int> nums{9, 11};
+//            vector<int> expected{11};
+//            assert(expected == solution.maxSlidingWindow(nums, 2));
+//        }
+//        {
+//            vector<int> nums{4, -2};
+//            vector<int> expected{4};
+//            assert(expected == solution.maxSlidingWindow(nums, 2));
+//        }
         {
-            vector<int> nums{1, 3, -1, -3, 5, 3, 6, 7};
-            vector<int> expected{3, 3, 5, 5, 6, 7};
+            vector<int> nums{1, 3, 1, 2, 0, 5};
+            vector<int> expected{3, 3, 2, 5};
             assert(expected == solution.maxSlidingWindow(nums, 3));
-        }
-        {
-            vector<int> nums{1};
-            vector<int> expected{1};
-            assert(expected == solution.maxSlidingWindow(nums, 1));
-        }
-        {
-            vector<int> nums{1, -1};
-            vector<int> expected{1, -1};
-            assert(expected == solution.maxSlidingWindow(nums, 1));
-        }
-
-        {
-            vector<int> nums{9, 11};
-            vector<int> expected{11};
-            assert(expected == solution.maxSlidingWindow(nums, 2));
-        }
-        {
-            vector<int> nums{4, -2};
-            vector<int> expected{4};
-            assert(expected == solution.maxSlidingWindow(nums, 2));
         }
     }
 }
