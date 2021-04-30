@@ -67,7 +67,7 @@ namespace lc239 {
 
             int num_length = nums.size();
             for (; i < num_length; ++i) {
-                heap[seq_to_heap[0]] = i;
+                heap[seq_to_heap[0]] = nums[i];
                 int poped = seq_to_heap.front();
                 seq_to_heap.pop_front();
                 seq_to_heap.push_back(poped);
