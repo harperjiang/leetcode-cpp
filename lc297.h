@@ -37,6 +37,9 @@ namespace lc297 {
         }
 
         TreeNode *deserialize_withsize(string &buffer, int position) {
+            if(position<=0) {
+                return nullptr;
+            }
             // read sizes
             int val = read_int(buffer, position - 4);
             int left_size = read_int(buffer, position - 12);
@@ -44,10 +47,10 @@ namespace lc297 {
 
             TreeNode *node = new TreeNode(val);
             if (left_size != 0) {
-                node->left = deserialize_withsize(buffer, position - 12 - right_size - left_size);
+                node->left = deserialize_withsize(buffer, position - 12 - right_size );
             }
             if (right_size != 0) {
-                node->right = deserialize_withsize(buffer, position - 12 - right_size);
+                node->right = deserialize_withsize(buffer, position - 12 );
             }
             return node;
         }
@@ -60,35 +63,6 @@ namespace lc297 {
         int read_int(string &buffer, int pos) {
             return *(int *) (buffer.data() + pos);
         }
-
-//        int write_int(string &buffer, int val) {
-//            int counter = 0;
-//            int remain = val;
-//            do {
-//                int write = remain & 0x7F;
-//                remain >> 7;
-//                if (remain != 0) {
-//                    write |= 0x80;
-//                }
-//                buffer.append(1, write);
-//                counter++;
-//            } while (remain != 0);
-//            return counter;
-//        }
-//
-//        int read_int(string &buffer, int pos) {
-//            int result = 0;
-//            int pointer = pos;
-//            const char *data = buffer.data();
-//            int counter = 0;
-//            int byte = 0;
-//            do {
-//                byte = data[pointer++];
-//                result |= byte << (7 * counter++);
-//            } while (byte & 0x80);
-//
-//            return result;
-//        }
 
     public:
 
@@ -112,16 +86,25 @@ namespace lc297 {
     void run() {
         Codec ser, deser;
 
-        TreeNode *root = new TreeNode(5);
-        root->left = new TreeNode(4);
+        TreeNode *root = new TreeNode(1);
+        root->left = new TreeNode(2);
         root->right = new TreeNode(3);
-        root->left->left = new TreeNode(2);
+        root->right->left = new TreeNode(4);
+        root->right->right= new TreeNode(5);
         TreeNode *ans = deser.deserialize(ser.serialize(root));
 
-        delete root->left->left;
+        delete root->right->left;
+        delete root->right->right;
         delete root->left;
         delete root->right;
         delete root;
+
+        delete ans->right->left;
+        delete ans->right->right;
+        delete ans->left;
+        delete ans->right;
+        delete ans;
+
         return;
     }
 
